@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متجري العصري - لوحة الإدارة</title>
+    <style>
+        :root {
+            --primary-color: #007185;
+            --secondary-color: #FF9900;
+            --background-color: #EAEDED;
+            --card-background: #FFFFFF;
+            --text-color: #0F1111;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --disabled-color: #6c757d;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        /* --- Header --- */
+        header {
+            background-color: #131921;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        header h1 {
+            font-size: 1.5rem;
+            margin: 0;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-type-badge {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        .store-link {
+            color: white;
+            background: var(--primary-color);
+            padding: 8px 15px;
+            border-radius: 4px;
+            text-decoration: none;
+            margin-left: 15px;
+        }
+
+        main {
+            padding: 20px;
+            max-width: 1400px;
+            margin: auto;
+        }
+
+        /* --- Admin Dashboard --- */
+        .admin-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .admin-stat-card {
+            background: var(--card-background);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .admin-stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .admin-stat-card h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        .admin-stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .admin-stat-card .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        /* --- Admin Tabs --- */
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .admin-tab-btn {
+            padding: 10px 15px;
+            background-color: #f0f0f0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-weight: bold;
+        }
+
+        .admin-tab-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .admin-tab-content {
+            display: none;
+        }
+
+        .admin-tab-content.active {
+            display: block;
+        }
+
+        /* --- Orders Filter --- */
+        .admin-orders-filter {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 12px;
+            background-color: #f0f0f0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .filter-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* --- Order Cards --- */
+        .order-card {
+            background: var(--card-background);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .order-card-cancelled {
+            background-color: #f8f9fa;
+            border-left: 5px solid var(--danger-color);
+        }
+
+        .order-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .order-details-toggle {
+            background: none;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .order-items-details {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #ccc;
+        }
+        .order-items-details ul {
+            list-style: none;
+            padding: 0;
+        }
+        .order-items-details li {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+
+        /* --- Progress Bar for Orders --- */
+        .order-progress {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .order-progress::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #ddd;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .progress-step-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .progress-step.active .progress-step-icon {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .progress-step.completed .progress-step-icon {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .progress-step-label {
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        /* --- Utilities --- */
+        .hidden {
+            display: none !important;
+        }
+        .order-card-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .order-card-actions button {
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        .btn-success { background-color: var(--success-color); }
+        .btn-danger { background-color: var(--danger-color); }
+        .btn-warning { background-color: var(--warning-color); }
+        .btn-info { background-color: var(--info-color); }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            color: white;
+            font-weight: bold;
+        }
+        .status-pending { background-color: var(--warning-color); }
+        .status-confirmed { background-color: var(--primary-color); }
+        .status-preparing { background-color: var(--info-color); }
+        .status-delivering { background-color: #6f42c1; }
+        .status-delivered { background-color: var(--success-color); }
+        .status-cancelled { background-color: var(--danger-color); }
+
+        /* Customer Cards */
+        .customer-card {
+            background: var(--card-background);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Address Groups */
+        .address-group {
+            background: var(--card-background);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .address-group h4 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .address-group ul {
+            columns: 2;
+            padding: 0;
+        }
+
+        .address-group li {
+            list-style-type: none;
+            padding: 5px 0;
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #333;
+            color: #fff;
+            padding: 16px;
+            border-radius: 4px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .admin-dashboard {
+                grid-template-columns: 1fr;
+            }
+            .admin-tabs {
+                flex-direction: column;
+            }
+            .admin-orders-filter {
+                flex-direction: column;
+            }
+            .address-group ul {
+                columns: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>متجري العصري - لوحة الإدارة</h1>
+        <div class="user-info">
+            <span id="user-name">مدير النظام</span>
+            <span class="user-type-badge">مدير</span>
+            <a href="index.html" class="store-link">العودة للمتجر</a>
+            <button id="logout-btn" style="background: var(--danger-color); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">تسجيل الخروج</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="admin-dashboard">
+            <div class="admin-stat-card">
+                <h3>الطلبات اليوم</h3>
+                <div class="stat-value" id="today-orders">0</div>
+                <div class="stat-label">طلبات اليوم</div>
+            </div>
+            <div class="admin-stat-card">
+                <h3>طلبات قيد المراجعة</h3>
+                <div class="stat-value" id="pending-orders">0</div>
+                <div class="stat-label">في انتظار المعالجة</div>
+            </div>
+            <div class="admin-stat-card">
+                <h3>إجمالي العملاء</h3>
+                <div class="stat-value" id="total-customers">0</div>
+                <div class="stat-label">عميل مسجل</div>
+            </div>
+            <div class="admin-stat-card">
+                <h3>إجمالي المبيعات</h3>
+                <div class="stat-value" id="total-sales">0</div>
+                <div class="stat-label">جنيه</div>
+            </div>
+        </div>
+
+        <div class="admin-tabs">
+            <button class="admin-tab-btn active" data-tab="orders">الطلبات</button>
+            <button class="admin-tab-btn" data-tab="customers">العملاء</button>
+            <button class="admin-tab-btn" data-tab="analytics">الإحصائيات</button>
+            <button class="admin-tab-btn" data-tab="delivery">التوصيل</button>
+        </div>
+
+        <div id="admin-orders" class="admin-tab-content active">
+            <div class="admin-orders-filter">
+                <button class="filter-btn active" data-filter="all">الكل</button>
+                <button class="filter-btn" data-filter="pending">قيد المراجعة</button>
+                <button class="filter-btn" data-filter="confirmed">تم الدفع</button>
+                <button class="filter-btn" data-filter="preparing">قيد التجهيز</button>
+                <button class="filter-btn" data-filter="delivering">قيد التوصيل</button>
+                <button class="filter-btn" data-filter="delivered">تم التسليم</button>
+                <button class="filter-btn" data-filter="cancelled">ملغاة</button>
+            </div>
+            <div id="admin-orders-list">
+                <p style="text-align: center;">جاري تحميل الطلبات...</p>
+            </div>
+        </div>
+
+        <div id="admin-customers" class="admin-tab-content">
+            <div class="toolbar">
+                <input type="search" id="customer-search" placeholder="ابحث عن عميل...">
+            </div>
+            <div id="customers-list">
+                <p style="text-align: center;">جاري تحميل بيانات العملاء...</p>
+            </div>
+        </div>
+
+        <div id="admin-analytics" class="admin-tab-content">
+            <div class="admin-stat-card">
+                <h3>السلعة الأكثر طلباً</h3>
+                <div class="stat-value" id="most-ordered-product">-</div>
+                <div class="stat-label">المنتج الأكثر شيوعاً</div>
+            </div>
+            <div class="admin-stat-card">
+                <h3>إجمالي الطلبات</h3>
+                <div class="stat-value" id="total-orders">0</div>
+                <div class="stat-label">طلب منذ البداية</div>
+            </div>
+            <div id="sales-chart" style="height: 300px; background: white; padding: 20px; border-radius: 8px; margin-top: 20px;">
+                <h3>مخطط المبيعات</h3>
+                <p style="text-align: center;">سيتم عرض مخطط المبيعات هنا</p>
+            </div>
+        </div>
+
+        <div id="admin-delivery" class="admin-tab-content">
+            <h3>تجميع العملاء حسب العنوان</h3>
+            <div id="customers-by-address">
+                <p style="text-align: center;">جاري تحميل بيانات العناوين...</p>
+            </div>
+            
+            <h3 style="margin-top: 30px;">خطط التوصيل</h3>
+            <div id="delivery-routes">
+                <p style="text-align: center;">سيتم عرض خطط التوصيل هنا</p>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js";
+        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
+
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCfOzC8gkqkVSNZ3frtnnCMxbeq-v7yaTY",
+            authDomain: "almas-store-a51eb.firebaseapp.com",
+            databaseURL: "https://almas-store-a51eb-default-rtdb.firebaseio.com",
+            projectId: "almas-store-a51eb",
+            storageBucket: "almas-store-a51eb.appspot.com",
+            messagingSenderId: "502522968593",
+            appId: "1:502522968593:web:52dc253f8ea12f4d5bcfb0",
+            measurementId: "G-G0WC9BJ6JW"
+        };
+
+        // --- Initialization ---
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+
+        // --- Constants & Global State ---
+        const ADMIN_EMAIL = "admin@store.com";
+        let currentUserId = null;
+        let allOrders = [];
+        let allCustomers = [];
+
+        // --- DOM Elements ---
+        const elements = {
+            userName: document.getElementById('user-name'),
+            toast: document.getElementById('toast'),
+            logoutBtn: document.getElementById('logout-btn'),
+            tabButtons: document.querySelectorAll('.admin-tab-btn'),
+            tabContents: document.querySelectorAll('.admin-tab-content'),
+            filterButtons: document.querySelectorAll('.filter-btn'),
+        };
+
+        // --- Utility Functions ---
+        const showToast = (message, isSuccess = true) => {
+            elements.toast.textContent = message;
+            elements.toast.style.backgroundColor = isSuccess ? '#28a745' : '#dc3545';
+            elements.toast.classList.add('show');
+            setTimeout(() => elements.toast.classList.remove('show'), 3000);
+        };
+
+        const formatPrice = (price) => parseFloat(price).toFixed(2);
+        const formatDate = (timestamp) => timestamp ? new Date(timestamp).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' }) : 'غير محدد';
+
+        // --- Authentication ---
+        onAuthStateChanged(auth, user => {
+            if (user && user.email === ADMIN_EMAIL) {
+                currentUserId = user.uid;
+                setupDatabaseListeners();
+            } else {
+                window.location.href = "index.html";
+            }
+        });
+
+        // --- Database Listeners ---
+        const setupDatabaseListeners = () => {
+            onValue(ref(database, 'users'), snapshot => {
+                const users = snapshot.val() || {};
+                processUsersData(users);
+            });
+        };
+
+        const processUsersData = (users) => {
+            allOrders = [];
+            allCustomers = [];
+            let todayOrders = 0;
+            let pendingOrders = 0;
+            let totalCustomers = 0;
+            let totalSales = 0;
+            const today = new Date().toDateString();
+            
+            Object.entries(users).forEach(([userId, user]) => {
+                if (user.profile && user.profile.email !== ADMIN_EMAIL) {
+                    totalCustomers++;
+                    allCustomers.push({
+                        id: userId,
+                        ...user.profile,
+                        ordersCount: user.orders ? Object.keys(user.orders).length : 0
+                    });
+                }
+                
+                if (user.orders) {
+                    Object.entries(user.orders).forEach(([orderId, order]) => {
+                        const orderWithUser = {
+                            id: orderId,
+                            userId: userId,
+                            userInfo: user.profile || { name: 'عميل غير معروف' },
+                            ...order
+                        };
+                        allOrders.push(orderWithUser);
+                        
+                        if (new Date(order.timestamp).toDateString() === today) todayOrders++;
+                        if (order.status === 'قيد المراجعة') pendingOrders++;
+                        if (order.total) totalSales += order.total;
+                    });
+                }
+            });
+            
+            // تحديث الإحصائيات
+            document.getElementById('today-orders').textContent = todayOrders;
+            document.getElementById('pending-orders').textContent = pendingOrders;
+            document.getElementById('total-customers').textContent = totalCustomers;
+            document.getElementById('total-sales').textContent = formatPrice(totalSales);
+            document.getElementById('total-orders').textContent = allOrders.length;
+            
+            // تحديث المحتوى بناءً على التبويب النشط
+            const activeTab = document.querySelector('.admin-tab-btn.active').dataset.tab;
+            if (activeTab === 'orders') renderOrdersList();
+            if (activeTab === 'customers') renderCustomersList();
+            if (activeTab === 'analytics') renderAnalytics();
+            if (activeTab === 'delivery') renderDeliveryData();
+        };
+
+        // --- Orders Management ---
+        const renderOrdersList = () => {
+            const ordersList = document.getElementById('admin-orders-list');
+            const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+            
+            let filteredOrders = allOrders;
+            if (activeFilter !== 'all') {
+                const statusMap = {
+                    'pending': 'قيد المراجعة',
+                    'confirmed': 'تم تأكيد الدفع',
+                    'preparing': 'قيد التجهيز',
+                    'delivering': 'قيد التوصيل',
+                    'delivered': 'تم التسليم',
+                    'cancelled': 'ملغي'
+                };
+                filteredOrders = allOrders.filter(order => order.status === statusMap[activeFilter]);
+            }
+            
+            ordersList.innerHTML = '';
+            
+            if (filteredOrders.length === 0) {
+                ordersList.innerHTML = `<p style="text-align: center;">لا توجد طلبات.</p>`;
+                return;
+            }
+            
+            filteredOrders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            filteredOrders.forEach(order => {
+                const orderEl = createOrderCard(order);
+                ordersList.appendChild(orderEl);
+            });
+        };
+
+        const createOrderCard = (order) => {
+            const orderEl = document.createElement('div');
+            orderEl.className = `order-card ${order.status === 'ملغي' ? 'order-card-cancelled' : ''}`;
+
+            const orderItemsHTML = `<ul>${Object.values(order.items || {}).map(item =>
+                `<li><span>${item.name} (×${item.quantity})</span> <span>${formatPrice(item.price * item.quantity)} جنيه</span></li>`
+            ).join('')}</ul>`;
+
+            const statusClass = getStatusClass(order.status);
+            const statusIndex = getStatusIndex(order.status);
+            const progressSteps = ['قيد المراجعة', 'تم الدفع', 'قيد التجهيز', 'قيد التوصيل', 'تم التسليم'];
+
+            const progressHTML = order.status !== 'ملغي' ? `<div class="order-progress">
+                ${progressSteps.map((label, i) => `
+                    <div class="progress-step ${statusIndex >= i ? 'completed' : ''} ${statusIndex === i ? 'active' : ''}">
+                        <div class="progress-step-icon">${i+1}</div>
+                        <div class="progress-step-label">${label}</div>
+                    </div>
+                `).join('')}
+            </div>` : '';
+
+            let adminActionsHTML = '';
+            if (order.status !== 'ملغي' && order.status !== 'تم التسليم') {
+                 adminActionsHTML = `<div class="order-card-actions">
+                    <button class="btn-success" data-action="confirm-payment">تأكيد الدفع</button>
+                    <button class="btn-warning" data-action="preparing">تجهيز</button>
+                    <button class="btn-info" data-action="delivering">توصيل</button>
+                    <button class="btn-success" data-action="delivered">تم التسليم</button>
+                </div>`;
+            }
+            if (order.status === 'ملغي') {
+                 adminActionsHTML = `<div class="order-card-actions">
+                    <button class="btn-success" data-action="restore">استرجاع الطلب</button>
+                </div>`;
+            }
+
+            orderEl.innerHTML = `
+                <div class="order-card-header">
+                    <div>
+                        <h4>طلب #${(order.id || '').substring(0, 8)}</h4>
+                        <p>${formatDate(order.timestamp)}</p>
+                        <p><strong>العميل:</strong> ${order.userInfo.name} | <strong>الهاتف:</strong> ${order.userInfo.phone || 'N/A'}</p>
+                        <p><strong>العنوان:</strong> ${order.userInfo.address || 'N/A'}</p>
+                    </div>
+                    <span class="status-badge ${statusClass}">${order.status}</span>
+                </div>
+                <p><strong>الإجمالي:</strong> ${formatPrice(order.total)} جنيه</p>
+                <button class="order-details-toggle">عرض التفاصيل</button>
+                <div class="order-items-details hidden">
+                    <h4>المنتجات</h4>
+                    ${orderItemsHTML}
+                </div>
+                ${progressHTML}
+                ${adminActionsHTML}
+            `;
+
+            // Event Listeners for the card
+            orderEl.querySelector('.order-details-toggle').addEventListener('click', (e) => {
+                const details = e.target.nextElementSibling;
+                details.classList.toggle('hidden');
+                e.target.textContent = details.classList.contains('hidden') ? 'عرض التفاصيل' : 'إخفاء التفاصيل';
+            });
+
+            orderEl.querySelectorAll('.order-card-actions button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const action = button.dataset.action;
+                    const statusMap = {
+                        'confirm-payment': 'تم تأكيد الدفع', 'preparing': 'قيد التجهيز',
+                        'delivering': 'قيد التوصيل', 'delivered': 'تم التسليم',
+                        'restore': 'قيد المراجعة'
+                    };
+                    if (statusMap[action]) {
+                        updateOrderStatus(order.userId, order.id, statusMap[action]);
+                    }
+                });
+            });
+
+            return orderEl;
+        };
+
+        const getStatusClass = (status) => {
+            const map = {
+                'قيد المراجعة': 'status-pending', 'تم تأكيد الدفع': 'status-confirmed',
+                'قيد التجهيز': 'status-preparing', 'قيد التوصيل': 'status-delivering',
+                'تم التسليم': 'status-delivered', 'ملغي': 'status-cancelled'
+            };
+            return map[status] || '';
+        };
+
+        const getStatusIndex = (status) => {
+            const map = {
+                'قيد المراجعة': 0, 'تم تأكيد الدفع': 1, 'قيد التجهيز': 2,
+                'قيد التوصيل': 3, 'تم التسليم': 4, 'ملغي': -1
+            };
+            return map[status] ?? 0;
+        };
+
+        const updateOrderStatus = async (userId, orderId, newStatus) => {
+            const orderRef = ref(database, `users/${userId}/orders/${orderId}`);
+            try {
+                await update(orderRef, { status: newStatus });
+                showToast(`تم تحديث حالة الطلب إلى: ${newStatus}`);
+            } catch (error) {
+                showToast(`خطأ: ${error.message}`, false);
+            }
+        };
+
+        // --- Customers Management ---
+        const renderCustomersList = () => {
+            const customersList = document.getElementById('customers-list');
+            customersList.innerHTML = '';
+            
+            if (allCustomers.length === 0) {
+                customersList.innerHTML = `<p style="text-align: center;">لا يوجد عملاء مسجلين.</p>`;
+                return;
+            }
+            
+            allCustomers.forEach(customer => {
+                const customerEl = document.createElement('div');
+                customerEl.className = 'customer-card';
+                customerEl.innerHTML = `
+                    <h4>${customer.name}</h4>
+                    <p><strong>البريد الإلكتروني:</strong> ${customer.email}</p>
+                    <p><strong>رقم الهاتف:</strong> ${customer.phone || 'لا يوجد'}</p>
+                    <p><strong>العنوان:</strong> ${customer.address || 'لا يوجد'}</p>
+                    <p><strong>عدد الطلبات:</strong> ${customer.ordersCount}</p>
+                `;
+                customersList.appendChild(customerEl);
+            });
+        };
+
+        // --- Analytics ---
+        const renderAnalytics = () => {
+            // حساب المنتج الأكثر طلباً
+            let productCounts = {};
+            allOrders.forEach(order => {
+                if (order.items) {
+                    Object.values(order.items).forEach(item => {
+                        const productName = item.name;
+                        productCounts[productName] = (productCounts[productName] || 0) + (item.quantity || 1);
+                    });
+                }
+            });
+            
+            let mostOrderedProduct = '-';
+            let maxCount = 0;
+            
+            for (const [product, count] of Object.entries(productCounts)) {
+                if (count > maxCount) {
+                    maxCount = count;
+                    mostOrderedProduct = `${product} (${count})`;
+                }
+            }
+            
+            document.getElementById('most-ordered-product').textContent = mostOrderedProduct;
+        };
+
+        // --- Delivery Management ---
+        const renderDeliveryData = () => {
+            const addresses = {};
+            
+            allCustomers.forEach(customer => {
+                if (customer.address) {
+                    const address = customer.address;
+                    if (!addresses[address]) addresses[address] = [];
+                    addresses[address].push(customer.name);
+                }
+            });
+            
+            const addressContainer = document.getElementById('customers-by-address');
+            addressContainer.innerHTML = '';
+            
+            Object.entries(addresses).forEach(([address, customers]) => {
+                const addressEl = document.createElement('div');
+                addressEl.className = 'address-group';
+                addressEl.innerHTML = `
+                    <h4>${address}</h4>
+                    <ul>
+                        ${customers.map(customer => `<li>${customer}</li>`).join('')}
+                    </ul>
+                `;
+                addressContainer.appendChild(addressEl);
+            });
+        };
+
+        // --- Tab Management ---
+        const setupAdminTabs = () => {
+            elements.tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.dataset.tab;
+                    
+                    // إزالة النشاط من جميع الأزرار والمحتويات
+                    elements.tabButtons.forEach(btn => btn.classList.remove('active'));
+                    elements.tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // إضافة النشاط للعناصر المحددة
+                    button.classList.add('active');
+                    document.getElementById(`admin-${tabId}`).classList.add('active');
+                    
+                    // تحميل محتوى التبويب
+                    if (tabId === 'orders') renderOrdersList();
+                    if (tabId === 'customers') renderCustomersList();
+                    if (tabId === 'analytics') renderAnalytics();
+                    if (tabId === 'delivery') renderDeliveryData();
+                });
+            });
+        };
+
+        // --- Filter Management ---
+        const setupFilters = () => {
+            elements.filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    elements.filterButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    renderOrdersList();
+                });
+            });
+        };
+
+        // --- Event Listeners Setup ---
+        elements.logoutBtn.addEventListener('click', () => signOut(auth).then(() => {
+            showToast("تم تسجيل الخروج.");
+            window.location.href = "index.html";
+        }));
+
+        // Initialize
+        setupAdminTabs();
+        setupFilters();
+
+    </script>
+</body>
+</html>
