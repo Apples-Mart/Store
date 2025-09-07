@@ -886,21 +886,21 @@
 
         /* أنماط للرسوم المتحركة للشرائط - معدلة */
         @keyframes marquee1 {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
 
         @keyframes marquee2 {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
         }
 
         .marquee-1 .marquee-inner {
-            animation: marquee1 60s linear infinite; /* زيادة المدة لتقليل السرعة */
+            animation: marquee1 180s linear infinite; /* زيادة المدة لتقليل السرعة */
         }
 
         .marquee-2 .marquee-inner {
-            animation: marquee2 40s linear infinite; /* زيادة المدة لتقليل السرعة */
+            animation: marquee2 80s linear infinite; /* زيادة المدة لتقليل السرعة */
         }
 
         .marquee-inner {
