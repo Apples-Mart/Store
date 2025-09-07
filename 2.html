@@ -887,12 +887,12 @@
         /* أنماط للرسوم المتحركة للشرائط - معدلة */
         @keyframes marquee1-rtl {
           0%   { transform: translateX(100%); }  /* يبدأ من اليمين */
-         100% { transform: translateX(-100%); } /* ينتهي عند اليسار */
+         0% { transform: translateX(-100%); } /* ينتهي عند اليسار */
         }
 
         @keyframes marquee2-rtl {
             0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
+            0% { transform: translateX(-100%); }
         }
 
         .marquee-1 .marquee-inner {
