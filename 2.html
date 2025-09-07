@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apples Mart</title>
@@ -327,6 +326,7 @@
             z-index: 10;
             color: #ccc;
             transition: all 0.2s;
+            font-size: 14px;
         }
 
         .favorite-btn:hover, .favorite-btn.active {
@@ -884,28 +884,29 @@
             }
         }
 
-        /* أنماط للرسوم المتحركة للشرائط */
+        /* أنماط للرسوم المتحركة للشرائط - معدلة */
         @keyframes marquee1 {
-            0% { transform: translateX(-50); }
-            100% { transform: translateX(0%); }
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
         }
 
         @keyframes marquee2 {
-            0% { transform: translateX(-50); }
-            100% { transform: translateX(0%); }
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
         }
 
         .marquee-1 .marquee-inner {
-            animation: marquee1 60s linear infinite;
+            animation: marquee1 60s linear infinite; /* زيادة المدة لتقليل السرعة */
         }
 
         .marquee-2 .marquee-inner {
-            animation: marquee2 40s linear infinite;
+            animation: marquee2 40s linear infinite; /* زيادة المدة لتقليل السرعة */
         }
 
         .marquee-inner {
             display: flex;
             animation-fill-mode: forwards;
+            width: max-content; /* إضافة هذه الخاصية */
         }
 
         .marquee:hover .marquee-inner {
@@ -1301,7 +1302,7 @@
             const categoryKeys = Object.keys(categoriesData);
             
             // مضاعفة القائمة لتحقيق تأثير متواصل
-            const marqueeContent1 = [...categoryKeys, ...categoryKeys].map(cat => 
+            const marqueeContent1 = [...categoryKeys, ...categoryKeys, ...categoryKeys].map(cat => 
                 `<span class="marquee-item" data-category="${cat}">${cat}</span>`
             ).join('');
             
@@ -1322,7 +1323,7 @@
             const randomProducts = [...allProducts].sort(() => 0.5 - Math.random()).slice(0, 20);
             
             // مضاعفة القائمة لتحقيق تأثير متواصل
-            const marqueeContent2 = [...randomProducts, ...randomProducts].map(product => 
+            const marqueeContent2 = [...randomProducts, ...randomProducts, ...randomProducts].map(product => 
                 `<span class="marquee-item" data-sku="${product.sku}">${product.name}</span>`
             ).join('');
             
@@ -1338,6 +1339,16 @@
                     }
                 });
             });
+
+            // إعادة تشغيل الرسوم المتحركة بعد التعديل
+            setTimeout(() => {
+                const marqueeInners = document.querySelectorAll('.marquee-inner');
+                marqueeInners.forEach(inner => {
+                    inner.style.animation = 'none';
+                    void inner.offsetWidth; // إعادة التدفق
+                    inner.style.animation = null;
+                });
+            }, 100);
         };
 
         const showRandomCategories = () => {
@@ -1802,7 +1813,8 @@
             }
 
             const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value || 'cash';
-            const paymentMethodText = paymentMethod === 'cash' ? 'الدفع عند الاستلام' : 
+            const paymentMethodText = paymentMethod === 'cash'
+                    const paymentMethodText = paymentMethod === 'cash' ? 'الدفع عند الاستلام' : 
                                       paymentMethod === 'instapay' ? 'انستا باي' : 'المحافظ الإلكترونية';
 
             const orderDetails = {
