@@ -885,14 +885,14 @@
         }
 
         /* أنماط للرسوم المتحركة للشرائط - معدلة */
-        @keyframes marquee1-rtl {
-          0%   { transform: translateX(100%); }  /* يبدأ من اليمين */
-         0% { transform: translateX(-100%); } /* ينتهي عند اليسار */
+        @keyframes marquee11 {
+          0%   { transform: translateX(-100%); }  /* يبدأ من اليمين */
+         100% { transform: translateX(0%); } /* ينتهي عند اليسار */
         }
 
-        @keyframes marquee2-rtl {
-            0% { transform: translateX(100%); }
-            0% { transform: translateX(-100%); }
+        @keyframes marquee2{
+        0% { transform: translateX(-100%); } /* يبدأ من خارج الشاشة على اليسار */
+        100% { transform: translateX(0%); } /* يتحرك إلى موضعه الطبيعي */
         }
 
         .marquee-1 .marquee-inner {
