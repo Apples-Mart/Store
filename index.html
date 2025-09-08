@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apples Mart</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#1E2A3A"/>
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link rel="manifest" href="manifest.json">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2033,7 +2039,7 @@
             }
 
             const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value || 'cash';
-                                const paymentMethodText = paymentMethod === 'cash' ? 'الدفع عند الاستلام' : 
+                                  const paymentMethodText = paymentMethod === 'cash' ? 'الدفع عند الاستلام' : 
                                       paymentMethod === 'instapay' ? 'انستا باي' : 'المحافظ الإلكترونية';
 
             const orderDetails = {
@@ -2136,6 +2142,19 @@
             // حفظ التفضيل في localStorage
             localStorage.setItem('viewMode', isMobileView ? 'mobile' : 'desktop');
         };
+
+        // تسجيل Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker: Registered');
+                    })
+                    .catch(err => {
+                        console.error('Service Worker: Registration failed', err);
+                    });
+            });
+        }
 
         // Event Listeners
         document.querySelectorAll('.nav-icon').forEach(icon => {
