@@ -233,25 +233,23 @@
         }
 
         /* أنماط للرسوم المتحركة للشرائط - معدلة */
-       @keyframes marquee1 {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
+        @keyframes marquee1 {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
 
-@keyframes marquee2 {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
+        @keyframes marquee2 {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
 
-.marquee-1 .marquee-inner {
-    animation: marquee1 1200s linear infinite;
-    display: flex;
-}
+        .marquee-1 .marquee-inner {
+            animation: marquee1 1200s linear infinite;
+        }
 
-.marquee-2 .marquee-inner {
-    animation: marquee2 700s linear infinite;
-    display: flex;
-}
+        .marquee-2 .marquee-inner {
+            animation: marquee2 700s linear infinite;
+        }
 
         .marquee-inner {
             display: flex;
