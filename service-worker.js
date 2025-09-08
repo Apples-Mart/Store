@@ -1,13 +1,13 @@
-// service-worker.js
-
 const APP_SHELL_CACHE_NAME = 'apples-mart-shell-v1';
 const DATA_CACHE_NAME = 'apples-mart-data-v1';
 
 // الملفات الأساسية للتطبيق التي لا تتغير كثيرًا
 const urlsToCache = [
-  '/',
-  '/index.html',
-  // سيتم تخزين الموارد الخارجية (الخطوط، الأيقونات) ديناميكيًا عند أول طلب
+  './',
+  './index.html',
+  // أضف المسارات النسبية للموارد الأخرى مثل CSS و JavaScript
+  './style.css',
+  './app.js'
 ];
 
 // 1. تثبيت Service Worker وتخزين واجهة التطبيق
@@ -94,4 +94,3 @@ self.addEventListener('fetch', event => {
     );
   }
 });
-
