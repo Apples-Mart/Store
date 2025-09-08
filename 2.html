@@ -884,24 +884,23 @@
             }
         }
 
-                     /* تعريف الحركة الأولى باسم marquee1 */
-                    @keyframes marquee1 {
-                    0%   { transform: translateX(-100%); } /* الحالة الابتدائية */
-                    100% { transform: translateX(100%); }  /* الحالة النهائية */
-                    }
+        /* أنماط للرسوم المتحركة للشرائط - معدلة */
+        @keyframes marquee1 {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
 
-                    /* تعريف الحركة الثانية باسم marquee2 */
-                    @keyframes marquee2 {
-                    0%   { transform: translateX(-100%); }
-                    100% { transform: translateX(100%); }
-                    }
+        @keyframes marquee2 {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
 
         .marquee-1 .marquee-inner {
-            animation: marquee1 900s linear infinite; /* زيادة المدة لتقليل السرعة */
+            animation: marquee1 60s linear infinite; /* زيادة المدة لتقليل السرعة */
         }
 
         .marquee-2 .marquee-inner {
-            animation: marquee2 500s linear infinite; /* زيادة المدة لتقليل السرعة */
+            animation: marquee2 40s linear infinite; /* زيادة المدة لتقليل السرعة */
         }
 
         .marquee-inner {
@@ -1814,7 +1813,7 @@
             }
 
             const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value || 'cash';
-            const paymentMethodText = paymentMethod === 'cash' ? 'الدفع عند الاستلام' : 
+                                const paymentMethodText = paymentMethod === 'cash' ? 'الدفع عند الاستلام' : 
                                       paymentMethod === 'instapay' ? 'انستا باي' : 'المحافظ الإلكترونية';
 
             const orderDetails = {
