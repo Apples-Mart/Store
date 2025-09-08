@@ -1339,40 +1339,66 @@
 
 <div id="toast" class="toast"></div>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // تعريف المتغيرات العامة
-        let currentUserId = null;
-        let isAdmin = false;
-        let allProducts = [];
-        let categories = {};
-        let currentCart = {};
-        let userFavorites = {};
-        let lastOrder = null;
-        let isMobileView = true;
+document.addEventListener('DOMContentLoaded', function() {
+    // تعريف المتغيرات العامة
+    let currentUserId = null;
+    let isAdmin = false;
+    let allProducts = [];
+    let categories = {};
+    let currentCart = {};
+    let userFavorites = {};
+    let lastOrder = null;
+    let isMobileView = true;
 
-        // تهيئة حالة العرض
-        const savedViewMode = localStorage.getItem('viewMode');
-        if (savedViewMode === 'desktop') {
-            document.body.classList.add('desktop-view');
-            document.getElementById('mobile-icon').style.display = 'none';
-            document.getElementById('desktop-icon').style.display = 'block';
-            isMobileView = false;
+    // وظيفة مساعدة للحصول على العناصر مع التحقق من وجودها
+    function getElement(id) {
+        const element = document.getElementById(id);
+        if (!element) {
+            console.warn(`Element with ID '${id}' not found`);
         }
+        return element;
+    }
+
+    // تهيئة حالة العرض
+    const savedViewMode = localStorage.getItem('viewMode');
+    if (savedViewMode === 'desktop') {
+        document.body.classList.add('desktop-view');
+        const mobileIcon = getElement('mobile-icon');
+        const desktopIcon = getElement('desktop-icon');
         
-        // وظيفة التبديل بين وضعي العرض
-        document.getElementById('view-toggle').addEventListener('click', function() {
+        if (mobileIcon && desktopIcon) {
+            mobileIcon.style.display = 'none';
+            desktopIcon.style.display = 'block';
+        }
+        isMobileView = false;
+    }
+    
+    // وظيفة التبديل بين وضعي العرض
+    const viewToggle = getElement('view-toggle');
+    if (viewToggle) {
+        viewToggle.addEventListener('click', function() {
             isMobileView = !isMobileView;
             
             if (!isMobileView) {
                 document.body.classList.add('desktop-view');
-                document.getElementById('mobile-icon').style.display = 'none';
-                document.getElementById('desktop-icon').style.display = 'block';
+                const mobileIcon = getElement('mobile-icon');
+                const desktopIcon = getElement('desktop-icon');
+                
+                if (mobileIcon && desktopIcon) {
+                    mobileIcon.style.display = 'none';
+                    desktopIcon.style.display = 'block';
+                }
                 localStorage.setItem('viewMode', 'desktop');
                 showToast("وضع الكمبيوتر مفعل");
             } else {
                 document.body.classList.remove('desktop-view');
-                document.getElementById('mobile-icon').style.display = 'block';
-                document.getElementById('desktop-icon').style.display = 'none';
+                const mobileIcon = getElement('mobile-icon');
+                const desktopIcon = getElement('desktop-icon');
+                
+                if (mobileIcon && desktopIcon) {
+                    mobileIcon.style.display = 'block';
+                    desktopIcon.style.display = 'none';
+                }
                 localStorage.setItem('viewMode', 'mobile');
                 showToast("وضع الجوال مفعل");
             }
@@ -1382,122 +1408,132 @@
                 renderHomePage();
             }
         });
+    }
+    
+    // وظيفة عرض الإشعارات
+    function showToast(message, isSuccess = true) {
+        const toast = getElement('toast');
+        if (!toast) return;
         
-        // وظيفة عرض الإشعارات
-        function showToast(message, isSuccess = true) {
-            const toast = document.getElementById('toast');
-            if (!toast) return;
-            
-            toast.textContent = message;
-            toast.style.backgroundColor = isSuccess ? 'var(--success-color)' : 'var(--danger-color)';
-            toast.classList.add('show');
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
+        toast.textContent = message;
+        toast.style.backgroundColor = isSuccess ? 'var(--success-color)' : 'var(--danger-color)';
+        toast.classList.add('show');
         
-        // وظيفة مساعدة للحصول على العناصر
-        function getElement(id) {
-            return document.getElementById(id);
-        }
-        
-        // وظيفة تغيير علامات التبويب
-        function showTab(tabId) {
-            // إخفاء جميع علامات التبويب
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // إلغاء تنشيط جميع الأيقونات
-            document.querySelectorAll('.nav-icon').forEach(icon => {
-                icon.classList.remove('active');
-            });
-            
-            // عرض علامة التبويب المحددة
-            const targetTab = getElement(tabId);
-            if (targetTab) {
-                targetTab.classList.add('active');
-            }
-            
-            // تنشيط الأيقونة المناسبة
-            const navIcon = getElement(`nav-${tabId.replace('-tab', '')}-icon`);
-            if (navIcon) {
-                navIcon.classList.add('active');
-            }
-        }
-        
-        // تهيئة علامات التبويب
-        document.querySelectorAll('.nav-icon').forEach(icon => {
-            icon.addEventListener('click', function(e) {
-                const id = e.currentTarget.id;
-                
-                if (id === 'nav-logout-icon') {
-                    // معالجة تسجيل الخروج
-                    showToast("تم تسجيل الخروج.");
-                    // إخفاء عناصر المستخدم
-                    getElement('nav-profile-icon').style.display = 'none';
-                    getElement('nav-favorites-icon').style.display = 'none';
-                    getElement('nav-logout-icon').style.display = 'none';
-                    // إظهار زر تسجيل الدخول
-                    getElement('nav-auth-icon').style.display = 'block';
-                    // الانتقال إلى الصفحة الرئيسية
-                    showTab('home-tab');
-                } else {
-                    const tabId = id.replace('nav-', '').replace('-icon', '') + '-tab';
-                    
-                    if (tabId === 'checkout-tab' && Object.keys(currentCart).length === 0) {
-                        showToast('سلتك فارغة، أضف منتجات أولاً.', false);
-                        showTab('cart-tab');
-                    } else {
-                        showTab(tabId);
-                    }
-                }
-            });
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+    
+    // وظيفة تغيير علامات التبويب
+    function showTab(tabId) {
+        // إخفاء جميع علامات التبويب
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
         });
         
-        // تهيئة البحث والتصفية
-        const searchInput = getElement('search-input');
-        const categoryFilter = getElement('category-filter');
+        // إلغاء تنشيط جميع الأيقونات
+        document.querySelectorAll('.nav-icon').forEach(icon => {
+            icon.classList.remove('active');
+        });
         
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                if (typeof renderHomePage === 'function') {
-                    renderHomePage();
-                }
-            });
+        // عرض علامة التبويب المحددة
+        const targetTab = getElement(tabId);
+        if (targetTab) {
+            targetTab.classList.add('active');
         }
         
-        if (categoryFilter) {
-            categoryFilter.addEventListener('change', function() {
-                if (typeof renderHomePage === 'function') {
-                    renderHomePage();
-                }
-            });
+        // تنشيط الأيقونة المناسبة
+        const navIcon = getElement(`nav-${tabId.replace('-tab', '')}-icon`);
+        if (navIcon) {
+            navIcon.classList.add('active');
         }
-        
-        // تهيئة نموذج التسجيل/الدخول
-        const toggleSignup = getElement('toggle-signup');
-        if (toggleSignup) {
-            toggleSignup.addEventListener('click', function() {
-                const regFields = getElement('registration-fields');
-                const loginBtn = getElement('login-btn');
-                const signupBtn = getElement('signup-btn');
-                const authTitle = getElement('auth-title');
+    }
+    
+    // تهيئة علامات التبويب
+    document.querySelectorAll('.nav-icon').forEach(icon => {
+        icon.addEventListener('click', function(e) {
+            const id = e.currentTarget.id;
+            
+            if (id === 'nav-logout-icon') {
+                // معالجة تسجيل الخروج
+                showToast("تم تسجيل الخروج.");
+                // إخفاء عناصر المستخدم
+                const profileIcon = getElement('nav-profile-icon');
+                const favoritesIcon = getElement('nav-favorites-icon');
+                const logoutIcon = getElement('nav-logout-icon');
+                const authIcon = getElement('nav-auth-icon');
                 
-                const isHidden = regFields.style.display === 'none';
-                regFields.style.display = isHidden ? 'block' : 'none';
-                loginBtn.style.display = isHidden ? 'none' : 'block';
-                signupBtn.style.display = isHidden ? 'block' : 'none';
-                toggleSignup.textContent = isHidden ? 'العودة لتسجيل الدخول' : 'ليس لديك حساب؟ إنشاء حساب جديد';
-                authTitle.textContent = isHidden ? 'إنشاء حساب جديد' : 'تسجيل الدخول';
-            });
-        }
-        
-        // معالجة تسجيل الدخول
-        getElement('login-btn').addEventListener('click', function() {
-            const email = getElement('auth-email').value;
-            const password = getElement('auth-password').value;
+                if (profileIcon) profileIcon.style.display = 'none';
+                if (favoritesIcon) favoritesIcon.style.display = 'none';
+                if (logoutIcon) logoutIcon.style.display = 'none';
+                if (authIcon) authIcon.style.display = 'block';
+                
+                // الانتقال إلى الصفحة الرئيسية
+                showTab('home-tab');
+            } else {
+                const tabId = id.replace('nav-', '').replace('-icon', '') + '-tab';
+                
+                if (tabId === 'checkout-tab' && Object.keys(currentCart).length === 0) {
+                    showToast('سلتك فارغة، أضف منتجات أولاً.', false);
+                    showTab('cart-tab');
+                } else {
+                    showTab(tabId);
+                }
+            }
+        });
+    });
+    
+    // تهيئة البحث والتصفية
+    const searchInput = getElement('search-input');
+    const categoryFilter = getElement('category-filter');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            if (typeof renderHomePage === 'function') {
+                renderHomePage();
+            }
+        });
+    }
+    
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', function() {
+            if (typeof renderHomePage === 'function') {
+                renderHomePage();
+            }
+        });
+    }
+    
+    // تهيئة نموذج التسجيل/الدخول
+    const toggleSignup = getElement('toggle-signup');
+    if (toggleSignup) {
+        toggleSignup.addEventListener('click', function() {
+            const regFields = getElement('registration-fields');
+            const loginBtn = getElement('login-btn');
+            const signupBtn = getElement('signup-btn');
+            const authTitle = getElement('auth-title');
+            
+            if (!regFields || !loginBtn || !signupBtn || !authTitle) return;
+            
+            const isHidden = regFields.style.display === 'none';
+            regFields.style.display = isHidden ? 'block' : 'none';
+            loginBtn.style.display = isHidden ? 'none' : 'block';
+            signupBtn.style.display = isHidden ? 'block' : 'none';
+            toggleSignup.textContent = isHidden ? 'العودة لتسجيل الدخول' : 'ليس لديك حساب؟ إنشاء حساب جديد';
+            authTitle.textContent = isHidden ? 'إنشاء حساب جديد' : 'تسجيل الدخول';
+        });
+    }
+    
+    // معالجة تسجيل الدخول
+    const loginBtn = getElement('login-btn');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', function() {
+            const emailInput = getElement('auth-email');
+            const passwordInput = getElement('auth-password');
+            
+            if (!emailInput || !passwordInput) return;
+            
+            const email = emailInput.value;
+            const password = passwordInput.value;
             
             if (!email || !password) {
                 showToast('يرجى ملء جميع الحقول', false);
@@ -1508,22 +1544,38 @@
             showToast('تم تسجيل الدخول بنجاح!');
             
             // إخفاء زر تسجيل الدخول وإظهار عناصر المستخدم
-            getElement('nav-auth-icon').style.display = 'none';
-            getElement('nav-profile-icon').style.display = 'block';
-            getElement('nav-favorites-icon').style.display = 'block';
-            getElement('nav-logout-icon').style.display = 'block';
+            const authIcon = getElement('nav-auth-icon');
+            const profileIcon = getElement('nav-profile-icon');
+            const favoritesIcon = getElement('nav-favorites-icon');
+            const logoutIcon = getElement('nav-logout-icon');
+            
+            if (authIcon) authIcon.style.display = 'none';
+            if (profileIcon) profileIcon.style.display = 'block';
+            if (favoritesIcon) favoritesIcon.style.display = 'block';
+            if (logoutIcon) logoutIcon.style.display = 'block';
             
             // الانتقال إلى الصفحة الرئيسية
             showTab('home-tab');
         });
-        
-        // معالجة إنشاء الحساب
-        getElement('signup-btn').addEventListener('click', function() {
-            const email = getElement('auth-email').value;
-            const password = getElement('auth-password').value;
-            const name = getElement('signup-name').value;
-            const phone = getElement('signup-phone').value;
-            const address = getElement('signup-address').value;
+    }
+    
+    // معالجة إنشاء الحساب
+    const signupBtn = getElement('signup-btn');
+    if (signupBtn) {
+        signupBtn.addEventListener('click', function() {
+            const emailInput = getElement('auth-email');
+            const passwordInput = getElement('auth-password');
+            const nameInput = getElement('signup-name');
+            const phoneInput = getElement('signup-phone');
+            const addressInput = getElement('signup-address');
+            
+            if (!emailInput || !passwordInput || !nameInput || !phoneInput || !addressInput) return;
+            
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            const name = nameInput.value;
+            const phone = phoneInput.value;
+            const address = addressInput.value;
             
             if (!email || !password || !name || !phone || !address) {
                 showToast('يرجى ملء جميع الحقول', false);
@@ -1534,33 +1586,56 @@
             showToast('تم إنشاء الحساب بنجاح!');
             
             // إخفاء نموذج التسجيل
-            getElement('registration-fields').style.display = 'none';
-            getElement('login-btn').style.display = 'block';
-            getElement('signup-btn').style.display = 'none';
-            getElement('toggle-signup').textContent = 'ليس لديك حساب؟ إنشاء حساب جديد';
-            getElement('auth-title').textContent = 'تسجيل الدخول';
+            const regFields = getElement('registration-fields');
+            const loginBtn = getElement('login-btn');
+            const signupBtn = getElement('signup-btn');
+            const authTitle = getElement('auth-title');
+            
+            if (regFields) regFields.style.display = 'none';
+            if (loginBtn) loginBtn.style.display = 'block';
+            if (signupBtn) signupBtn.style.display = 'none';
+            if (toggleSignup) toggleSignup.textContent = 'ليس لديك حساب؟ إنشاء حساب جديد';
+            if (authTitle) authTitle.textContent = 'تسجيل الدخول';
             
             // إخفاء زر تسجيل الدخول وإظهار عناصر المستخدم
-            getElement('nav-auth-icon').style.display = 'none';
-            getElement('nav-profile-icon').style.display = 'block';
-            getElement('nav-favorites-icon').style.display = 'block';
-            getElement('nav-logout-icon').style.display = 'block';
+            const authIcon = getElement('nav-auth-icon');
+            const profileIcon = getElement('nav-profile-icon');
+            const favoritesIcon = getElement('nav-favorites-icon');
+            const logoutIcon = getElement('nav-logout-icon');
+            
+            if (authIcon) authIcon.style.display = 'none';
+            if (profileIcon) profileIcon.style.display = 'block';
+            if (favoritesIcon) favoritesIcon.style.display = 'block';
+            if (logoutIcon) logoutIcon.style.display = 'block';
             
             // الانتقال إلى الصفحة الرئيسية
             showTab('home-tab');
         });
-        
-        // الانتقال إلى صفحة الدفع
-        getElement('goto-checkout-btn').addEventListener('click', function() {
+    }
+    
+    // الانتقال إلى صفحة الدفع
+    const gotoCheckoutBtn = getElement('goto-checkout-btn');
+    if (gotoCheckoutBtn) {
+        gotoCheckoutBtn.addEventListener('click', function() {
             showTab('checkout-tab');
         });
-        
-        // تأكيد الطلب
-        getElement('place-order-btn').addEventListener('click', function() {
-            const name = getElement('shipping-name').value;
-            const address = getElement('shipping-address').value;
-            const phone = getElement('shipping-phone').value;
-            const city = getElement('shipping-city').value;
+    }
+    
+    // تأكيد الطلب
+    const placeOrderBtn = getElement('place-order-btn');
+    if (placeOrderBtn) {
+        placeOrderBtn.addEventListener('click', function() {
+            const nameInput = getElement('shipping-name');
+            const addressInput = getElement('shipping-address');
+            const phoneInput = getElement('shipping-phone');
+            const cityInput = getElement('shipping-city');
+            
+            if (!nameInput || !addressInput || !phoneInput || !cityInput) return;
+            
+            const name = nameInput.value;
+            const address = addressInput.value;
+            const phone = phoneInput.value;
+            const city = cityInput.value;
             
             if (!name || !address || !phone || !city) {
                 showToast('يرجى ملء جميع معلومات الشحن', false);
@@ -1582,140 +1657,155 @@
             currentCart = {};
             updateCartUI();
         });
-        
-        // العودة إلى التسوق
-        getElement('back-to-shopping').addEventListener('click', function() {
+    }
+    
+    // العودة إلى التسوق
+    const backToShoppingBtn = getElement('back-to-shopping');
+    if (backToShoppingBtn) {
+        backToShoppingBtn.addEventListener('click', function() {
             showTab('home-tab');
         });
+    }
+    
+    // وظيفة تحديث واجهة سلة التسوق
+    function updateCartUI() {
+        const cartItems = getElement('cart-items');
+        const cartIconCount = getElement('cart-icon-count');
+        const cartSubtotal = getElement('cart-subtotal');
+        const cartTotal = getElement('cart-total');
+        const cartCheckoutSection = getElement('cart-checkout-section');
         
-        // وظيفة تحديث واجهة سلة التسوق
-        function updateCartUI() {
-            const cartItems = getElement('cart-items');
-            const cartIconCount = getElement('cart-icon-count');
-            const cartSubtotal = getElement('cart-subtotal');
-            const cartTotal = getElement('cart-total');
-            const cartCheckoutSection = getElement('cart-checkout-section');
+        if (!cartItems) return;
+        
+        if (Object.keys(currentCart).length === 0) {
+            cartItems.innerHTML = '<p style="text-align: center;">سلة التسوق فارغة.</p>';
+            if (cartCheckoutSection) cartCheckoutSection.classList.add('hidden');
+        } else {
+            cartItems.innerHTML = '';
+            let subtotal = 0;
             
-            if (Object.keys(currentCart).length === 0) {
-                cartItems.innerHTML = '<p style="text-align: center;">سلة التسوق فارغة.</p>';
-                cartCheckoutSection.classList.add('hidden');
-            } else {
-                cartItems.innerHTML = '';
-                let subtotal = 0;
+            for (const [sku, product] of Object.entries(currentCart)) {
+                const itemTotal = product.price * (product.quantity || 1);
+                subtotal += itemTotal;
                 
-                for (const [sku, product] of Object.entries(currentCart)) {
-                    const itemTotal = product.price * (product.quantity || 1);
-                    subtotal += itemTotal;
-                    
-                    const itemEl = document.createElement('div');
-                    itemEl.className = 'cart-item';
-                    itemEl.innerHTML = `
-                        <div class="cart-item-info">
-                            <p class="cart-item-name">${product.name}</p>
-                            <p class="cart-item-price">${product.price.toFixed(2)} جنيه</p>
-                            <div class="cart-item-quantity">
-                                <button class="quantity-btn decrease-btn" data-sku="${sku}">-</button>
-                                <span class="quantity-value">${product.quantity || 1}</span>
-                                <button class="quantity-btn increase-btn" data-sku="${sku}">+</button>
-                            </div>
+                const itemEl = document.createElement('div');
+                itemEl.className = 'cart-item';
+                itemEl.innerHTML = `
+                    <div class="cart-item-info">
+                        <p class="cart-item-name">${product.name}</p>
+                        <p class="cart-item-price">${product.price.toFixed(2)} جنيه</p>
+                        <div class="cart-item-quantity">
+                            <button class="quantity-btn decrease-btn" data-sku="${sku}">-</button>
+                            <span class="quantity-value">${product.quantity || 1}</span>
+                            <button class="quantity-btn increase-btn" data-sku="${sku}">+</button>
                         </div>
-                        <button class="cart-item-remove" data-sku="${sku}">&times;</button>
-                    `;
-                    
-                    cartItems.appendChild(itemEl);
-                }
+                    </div>
+                    <button class="cart-item-remove" data-sku="${sku}">&times;</button>
+                `;
                 
-                cartCheckoutSection.classList.remove('hidden');
-                cartSubtotal.textContent = subtotal.toFixed(2) + ' جنيه';
-                cartTotal.textContent = (subtotal + 30).toFixed(2) + ' جنيه';
+                cartItems.appendChild(itemEl);
             }
             
-            cartIconCount.textContent = Object.keys(currentCart).length;
+            if (cartCheckoutSection) cartCheckoutSection.classList.remove('hidden');
+            if (cartSubtotal) cartSubtotal.textContent = subtotal.toFixed(2) + ' جنيه';
+            if (cartTotal) cartTotal.textContent = (subtotal + 30).toFixed(2) + ' جنيه';
         }
         
-        // محاكاة تحميل المنتجات
-        function loadProducts() {
-            // بيانات منتجات وهمية للاختبار
-            allProducts = [
-                { sku: 'P001', name: 'تفاح أحمر', price: 25.00, category: 'فواكه' },
-                { sku: 'P002', name: 'تفاح أخضر', price: 30.00, category: 'فواكه' },
-                { sku: 'P003', name: 'موز', price: 20.00, category: 'فواكه' },
-                { sku: 'P004', name: 'برتقال', price: 15.00, category: 'فواكه' },
-                { sku: 'P005', name: 'خيار', price: 10.00, category: 'خضروات' },
-                { sku: 'P006', name: 'طماطم', price: 12.00, category: 'خضروات' },
-                { sku: 'P007', name: 'بطاطس', price: 8.00, category: 'خضروات' },
-                { sku: 'P008', name: 'جزر', price: 9.00, category: 'خضروات' }
-            ];
-            
-            // معالجة الفئات
-            categories = {};
-            allProducts.forEach(product => {
-                if (!categories[product.category]) {
-                    categories[product.category] = [];
-                }
-                categories[product.category].push(product);
-            });
-            
-            // تحديث خيارات التصفية
-            const categoryFilter = getElement('category-filter');
+        if (cartIconCount) cartIconCount.textContent = Object.keys(currentCart).length;
+    }
+    
+    // محاكاة تحميل المنتجات
+    function loadProducts() {
+        // بيانات منتجات وهمية للاختبار
+        allProducts = [
+            { sku: 'P001', name: 'تفاح أحمر', price: 25.00, category: 'فواكه' },
+            { sku: 'P002', name: 'تفاح أخضر', price: 30.00, category: 'فواكه' },
+            { sku: 'P003', name: 'موز', price: 20.00, category: 'فواكه' },
+            { sku: 'P004', name: 'برتقال', price: 15.00, category: 'فواكه' },
+            { sku: 'P005', name: 'خيار', price: 10.00, category: 'خضروات' },
+            { sku: 'P006', name: 'طماطم', price: 12.00, category: 'خضروات' },
+            { sku: 'P007', name: 'بطاطس', price: 8.00, category: 'خضروات' },
+            { sku: 'P008', name: 'جزر', price: 9.00, category: 'خضروات' }
+        ];
+        
+        // معالجة الفئات
+        categories = {};
+        allProducts.forEach(product => {
+            if (!categories[product.category]) {
+                categories[product.category] = [];
+            }
+            categories[product.category].push(product);
+        });
+        
+        // تحديث خيارات التصفية
+        const categoryFilter = getElement('category-filter');
+        if (categoryFilter) {
             categoryFilter.innerHTML = '<option value="all">كل الفئات</option>';
             
             for (const category of Object.keys(categories)) {
                 categoryFilter.innerHTML += `<option value="${category}">${category}</option>`;
             }
-            
-            // عرض الصفحة الرئيسية
-            renderHomePage();
-            showToast("تم تحميل المنتجات بنجاح");
         }
         
         // عرض الصفحة الرئيسية
-        function renderHomePage() {
-            const homeContent = getElement('home-content');
-            const categoryFilterValue = getElement('category-filter').value;
-            const searchTerm = getElement('search-input').value.toLowerCase();
+        renderHomePage();
+        showToast("تم تحميل المنتجات بنجاح");
+    }
+    
+    // عرض الصفحة الرئيسية
+    function renderHomePage() {
+        const homeContent = getElement('home-content');
+        const categoryFilter = getElement('category-filter');
+        const searchInput = getElement('search-input');
+        
+        if (!homeContent) return;
+        
+        const categoryFilterValue = categoryFilter ? categoryFilter.value : 'all';
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+        
+        homeContent.innerHTML = '';
+        
+        let filteredCategories = Object.keys(categories);
+        if (categoryFilterValue !== 'all') {
+            filteredCategories = [categoryFilterValue];
+        }
+        
+        let foundProducts = false;
+        
+        for (const cat of filteredCategories) {
+            const products = categories[cat].filter(p => 
+                p.name.toLowerCase().includes(searchTerm) || p.sku.toLowerCase().includes(searchTerm)
+            );
             
-            homeContent.innerHTML = '';
-            
-            let filteredCategories = Object.keys(categories);
-            if (categoryFilterValue !== 'all') {
-                filteredCategories = [categoryFilterValue];
-            }
-            
-            let foundProducts = false;
-            
-            for (const cat of filteredCategories) {
-                const products = categories[cat].filter(p => 
-                    p.name.toLowerCase().includes(searchTerm) || p.sku.toLowerCase().includes(searchTerm)
-                );
+            if (products.length > 0) {
+                foundProducts = true;
+                const section = document.createElement('div');
+                section.className = 'category-section';
+                section.innerHTML = `<h2>${cat}</h2><div class="category-grid"></div>`;
+                const grid = section.querySelector('.category-grid');
                 
-                if (products.length > 0) {
-                    foundProducts = true;
-                    const section = document.createElement('div');
-                    section.className = 'category-section';
-                    section.innerHTML = `<h2>${cat}</h2><div class="category-grid"></div>`;
-                    const grid = section.querySelector('.category-grid');
-                    
-                    products.forEach(p => {
-                        const card = document.createElement('div');
-                        card.className = 'product-card';
-                        card.innerHTML = `
-                            <button class="favorite-btn" data-sku="${p.sku}">
-                                <i class="fas fa-heart"></i>
-                            </button>
-                            <div class="product-card-content">
-                                <h4>${p.name}</h4>
-                                <p class="product-sku">الكود: ${p.sku}</p>
-                                <p class="product-price">${p.price.toFixed(2)} جنيه</p>
-                                <div class="product-card-actions">
-                                    <button class="details-btn" data-sku="${p.sku}">التفاصيل</button>
-                                    <button class="add-to-cart-btn" data-sku="${p.sku}"><i class="fas fa-cart-plus"></i></button>
-                                </div>
+                products.forEach(p => {
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    card.innerHTML = `
+                        <button class="favorite-btn" data-sku="${p.sku}">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                        <div class="product-card-content">
+                            <h4>${p.name}</h4>
+                            <p class="product-sku">الكود: ${p.sku}</p>
+                            <p class="product-price">${p.price.toFixed(2)} جنيه</p>
+                            <div class="product-card-actions">
+                                <button class="details-btn" data-sku="${p.sku}">التفاصيل</button>
+                                <button class="add-to-cart-btn" data-sku="${p.sku}"><i class="fas fa-cart-plus"></i></button>
                             </div>
-                        `;
-                        
-                        // إضافة حدث إضافة إلى السلة
-                        card.querySelector('.add-to-cart-btn').addEventListener('click', function() {
+                        </div>
+                    `;
+                    
+                    // إضافة حدث إضافة إلى السلة
+                    const addToCartBtn = card.querySelector('.add-to-cart-btn');
+                    if (addToCartBtn) {
+                        addToCartBtn.addEventListener('click', function() {
                             const sku = this.getAttribute('data-sku');
                             const product = allProducts.find(prod => prod.sku === sku);
                             
@@ -1730,25 +1820,26 @@
                                 showToast(`تمت إضافة ${product.name} إلى السلة`);
                             }
                         });
-                        
-                        grid.appendChild(card);
-                    });
+                    }
                     
-                    homeContent.appendChild(section);
-                }
-            }
-            
-            if (!foundProducts) {
-                homeContent.innerHTML = '<p style="text-align: center;">لم يتم العثور على منتجات تطابق بحثك.</p>';
+                    grid.appendChild(card);
+                });
+                
+                homeContent.appendChild(section);
             }
         }
         
-        // بدء تحميل المنتجات
-        loadProducts();
-        
-        // عرض علامة التبويب الرئيسية افتراضيًا
-        showTab('home-tab');
-    });
+        if (!foundProducts) {
+            homeContent.innerHTML = '<p style="text-align: center;">لم يتم العثور على منتجات تطابق بحثك.</p>';
+        }
+    }
+    
+    // بدء تحميل المنتجات
+    loadProducts();
+    
+    // عرض علامة التبويب الرئيسية افتراضيًا
+    showTab('home-tab');
+});
 </script>
 </body>
 </html>
