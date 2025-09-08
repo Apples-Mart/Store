@@ -2950,4 +2950,31 @@
     getElement('login-btn').addEventListener('click', handleLogin);
     getElement('signup-btn').addEventListener('click', handleSignup);
     getElement('search-input').addEventListener('input', renderHomePage);
-    getElement('category-filter').add
+        getElement('category-filter').addEventListener('change', renderHomePage);
+    getElement('back-to-shopping').addEventListener('click', () => showTab('home-tab'));
+    getElement('view-toggle').addEventListener('click', toggleViewMode);
+
+    getElement('toggle-signup').addEventListener('click', () => {
+        const regFields = getElement('registration-fields');
+        const isHidden = regFields.style.display === 'none';
+        regFields.style.display = isHidden ? 'block' : 'none';
+        getElement('login-btn').style.display = isHidden ? 'none' : 'block';
+        getElement('signup-btn').style.display = isHidden ? 'block' : 'none';
+        getElement('toggle-signup').textContent = isHidden ? 'العودة لتسجيل الدخول' : 'ليس لديك حساب؟ إنشاء حساب جديد';
+        getElement('auth-title').textContent = isHidden ? 'إنشاء حساب جديد' : 'تسجيل الدخول';
+    });
+
+    // Initialize payment method logic
+    setupPaymentMethods();
+
+    // تحميل تفضيل وضع العرض من localStorage
+    const savedViewMode = localStorage.getItem('viewMode');
+    if (savedViewMode === 'desktop') {
+        isMobileView = false;
+        toggleViewMode();
+    }
+
+}); // نهاية document.addEventListener('DOMContentLoaded'
+    </script>
+</body>
+</html>
