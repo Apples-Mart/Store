@@ -884,16 +884,17 @@
             }
         }
 
-        /* أنماط للرسوم المتحركة للشرائط - معدلة */
-        @keyframes marquee1 {
-    0% { transform: translateX(-100%); } /* يبدأ من خارج الشاشة على اليسار */
-    100% { transform: translateX(0%); } /* يتحرك إلى موضعه الطبيعي */
-}
+                     /* تعريف الحركة الأولى باسم marquee1 */
+                    @keyframes marquee1 {
+                    0%   { transform: translateX(-100%); } /* الحالة الابتدائية */
+                    100% { transform: translateX(100%); }  /* الحالة النهائية */
+                    }
 
-        @keyframes marquee2 {
-    0% { transform: translateX(-100%); } /* يبدأ من خارج الشاشة على اليسار */
-    100% { transform: translateX(0%); } /* يتحرك إلى موضعه الطبيعي */
-}
+                    /* تعريف الحركة الثانية باسم marquee2 */
+                    @keyframes marquee2 {
+                    0%   { transform: translateX(-100%); }
+                    100% { transform: translateX(100%); }
+                    }
 
         .marquee-1 .marquee-inner {
             animation: marquee1 900s linear infinite; /* زيادة المدة لتقليل السرعة */
