@@ -464,385 +464,399 @@
     <div id="toast" class="toast"></div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
-        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js";
-        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js";
+    // لاحظ أننا أضفنا get هنا
+    import { getDatabase, ref, onValue, update, get } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
 
-        // --- Firebase Configuration ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyCfOzC8gkqkVSNZ3frtnnCMxbeq-v7yaTY",
-            authDomain: "almas-store-a51eb.firebaseapp.com",
-            databaseURL: "https://almas-store-a51eb-default-rtdb.firebaseio.com",
-            projectId: "almas-store-a51eb",
-            storageBucket: "almas-store-a51eb.appspot.com",
-            messagingSenderId: "502522968593",
-            appId: "1:502522968593:web:52dc253f8ea12f4d5bcfb0",
-            measurementId: "G-G0WC9BJ6JW"
-        };
+    // --- Firebase Configuration ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyCfOzC8gkqkVSNZ3frtnnCMxbeq-v7yaTY",
+        authDomain: "almas-store-a51eb.firebaseapp.com",
+        databaseURL: "https://almas-store-a51eb-default-rtdb.firebaseio.com",
+        projectId: "almas-store-a51eb",
+        storageBucket: "almas-store-a51eb.appspot.com",
+        messagingSenderId: "502522968593",
+        appId: "1:502522968593:web:52dc253f8ea12f4d5bcfb0",
+        measurementId: "G-G0WC9BJ6JW"
+    };
 
-        // --- Initialization ---
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const database = getDatabase(app);
+    // --- Initialization ---
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
 
-        // --- Constants & Global State ---
-        const ADMIN_EMAIL = "admin@store.com";
-        let currentUserId = null;
-        let allOrders = [];
-        let allCustomers = [];
+    // --- Global State ---
+    let currentUserId = null;
+    let allOrders = [];
+    let allCustomers = [];
 
-        // --- DOM Elements ---
-        const elements = {
-            userName: document.getElementById('user-name'),
-            toast: document.getElementById('toast'),
-            logoutBtn: document.getElementById('logout-btn'),
-            tabButtons: document.querySelectorAll('.admin-tab-btn'),
-            tabContents: document.querySelectorAll('.admin-tab-content'),
-            filterButtons: document.querySelectorAll('.filter-btn'),
-        };
+    // --- DOM Elements ---
+    const elements = {
+        userName: document.getElementById('user-name'),
+        toast: document.getElementById('toast'),
+        logoutBtn: document.getElementById('logout-btn'),
+        tabButtons: document.querySelectorAll('.admin-tab-btn'),
+        tabContents: document.querySelectorAll('.admin-tab-content'),
+        filterButtons: document.querySelectorAll('.filter-btn'),
+    };
 
-        // --- Utility Functions ---
-        const showToast = (message, isSuccess = true) => {
-            elements.toast.textContent = message;
-            elements.toast.style.backgroundColor = isSuccess ? '#28a745' : '#dc3545';
-            elements.toast.classList.add('show');
-            setTimeout(() => elements.toast.classList.remove('show'), 3000);
-        };
+    // --- Utility Functions ---
+    const showToast = (message, isSuccess = true) => {
+        elements.toast.textContent = message;
+        elements.toast.style.backgroundColor = isSuccess ? '#28a745' : '#dc3545';
+        elements.toast.classList.add('show');
+        setTimeout(() => elements.toast.classList.remove('show'), 3000);
+    };
 
-        const formatPrice = (price) => parseFloat(price).toFixed(2);
-        const formatDate = (timestamp) => timestamp ? new Date(timestamp).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' }) : 'غير محدد';
+    const formatPrice = (price) => parseFloat(price).toFixed(2);
+    const formatDate = (timestamp) => timestamp ? new Date(timestamp).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' }) : 'غير محدد';
 
-        // --- Authentication ---
-        onAuthStateChanged(auth, user => {
-            if (user && user.email === ADMIN_EMAIL) {
-                currentUserId = user.uid;
-                setupDatabaseListeners();
-            } else {
-                window.location.href = "index.html";
+    // --- Authentication (The New Secure Way) ---
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            // المستخدم مسجل دخوله، الآن سنتحقق من صلاحياته
+            const adminRef = ref(database, 'admins/' + user.uid);
+            try {
+                const snapshot = await get(adminRef);
+                if (snapshot.exists()) {
+                    // نعم، هو مدير. اسمح له بالدخول وشغل لوحة التحكم
+                    console.log("Admin access granted for user:", user.uid);
+                    currentUserId = user.uid;
+                    setupDatabaseListeners();
+                } else {
+                    // هو مستخدم عادي وليس مديرًا، أعد توجيهه
+                    console.log("Access denied. User is not an admin.");
+                    window.location.href = "index.html";
+                }
+            } catch (error) {
+                console.error("Error checking admin status:", error);
+                window.location.href = "index.html"; // أعد توجيهه عند حدوث خطأ
+            }
+        } else {
+            // لا يوجد مستخدم مسجل دخوله أصلًا، أعد توجيهه
+            console.log("No user signed in.");
+            window.location.href = "index.html";
+        }
+    });
+
+    // --- Database Listeners ---
+    // (باقي الكود هنا كما هو بدون أي تغيير)
+    const setupDatabaseListeners = () => {
+        onValue(ref(database, 'users'), snapshot => {
+            const users = snapshot.val() || {};
+            processUsersData(users);
+        });
+    };
+
+    const processUsersData = (users) => {
+        allOrders = [];
+        allCustomers = [];
+        let todayOrders = 0;
+        let pendingOrders = 0;
+        let totalCustomers = 0;
+        let totalSales = 0;
+        const today = new Date().toDateString();
+        
+        Object.entries(users).forEach(([userId, user]) => {
+            if (user.profile) { // لا نحتاج للتحقق من الإيميل هنا بعد الآن
+                totalCustomers++;
+                allCustomers.push({
+                    id: userId,
+                    ...user.profile,
+                    ordersCount: user.orders ? Object.keys(user.orders).length : 0
+                });
+            }
+            
+            if (user.orders) {
+                Object.entries(user.orders).forEach(([orderId, order]) => {
+                    const orderWithUser = {
+                        id: orderId,
+                        userId: userId,
+                        userInfo: user.profile || { name: 'عميل غير معروف' },
+                        ...order
+                    };
+                    allOrders.push(orderWithUser);
+                    
+                    if (new Date(order.timestamp).toDateString() === today) todayOrders++;
+                    if (order.status === 'قيد المراجعة') pendingOrders++;
+                    if (order.total) totalSales += order.total;
+                });
             }
         });
+        
+        // تحديث الإحصائيات
+        document.getElementById('today-orders').textContent = todayOrders;
+        document.getElementById('pending-orders').textContent = pendingOrders;
+        document.getElementById('total-customers').textContent = totalCustomers;
+        document.getElementById('total-sales').textContent = formatPrice(totalSales);
+        document.getElementById('total-orders').textContent = allOrders.length;
+        
+        // تحديث المحتوى بناءً على التبويب النشط
+        const activeTab = document.querySelector('.admin-tab-btn.active').dataset.tab;
+        if (activeTab === 'orders') renderOrdersList();
+        if (activeTab === 'customers') renderCustomersList();
+        if (activeTab === 'analytics') renderAnalytics();
+        if (activeTab === 'delivery') renderDeliveryData();
+    };
 
-        // --- Database Listeners ---
-        const setupDatabaseListeners = () => {
-            onValue(ref(database, 'users'), snapshot => {
-                const users = snapshot.val() || {};
-                processUsersData(users);
-            });
-        };
+    // --- Orders Management ---
+    const renderOrdersList = () => {
+        const ordersList = document.getElementById('admin-orders-list');
+        const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+        
+        let filteredOrders = allOrders;
+        if (activeFilter !== 'all') {
+            const statusMap = {
+                'pending': 'قيد المراجعة',
+                'confirmed': 'تم تأكيد الدفع',
+                'preparing': 'قيد التجهيز',
+                'delivering': 'قيد التوصيل',
+                'delivered': 'تم التسليم',
+                'cancelled': 'ملغي'
+            };
+            filteredOrders = allOrders.filter(order => order.status === statusMap[activeFilter]);
+        }
+        
+        ordersList.innerHTML = '';
+        
+        if (filteredOrders.length === 0) {
+            ordersList.innerHTML = `<p style="text-align: center;">لا توجد طلبات.</p>`;
+            return;
+        }
+        
+        filteredOrders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        filteredOrders.forEach(order => {
+            const orderEl = createOrderCard(order);
+            ordersList.appendChild(orderEl);
+        });
+    };
 
-        const processUsersData = (users) => {
-            allOrders = [];
-            allCustomers = [];
-            let todayOrders = 0;
-            let pendingOrders = 0;
-            let totalCustomers = 0;
-            let totalSales = 0;
-            const today = new Date().toDateString();
-            
-            Object.entries(users).forEach(([userId, user]) => {
-                if (user.profile && user.profile.email !== ADMIN_EMAIL) {
-                    totalCustomers++;
-                    allCustomers.push({
-                        id: userId,
-                        ...user.profile,
-                        ordersCount: user.orders ? Object.keys(user.orders).length : 0
-                    });
-                }
-                
-                if (user.orders) {
-                    Object.entries(user.orders).forEach(([orderId, order]) => {
-                        const orderWithUser = {
-                            id: orderId,
-                            userId: userId,
-                            userInfo: user.profile || { name: 'عميل غير معروف' },
-                            ...order
-                        };
-                        allOrders.push(orderWithUser);
-                        
-                        if (new Date(order.timestamp).toDateString() === today) todayOrders++;
-                        if (order.status === 'قيد المراجعة') pendingOrders++;
-                        if (order.total) totalSales += order.total;
-                    });
-                }
-            });
-            
-            // تحديث الإحصائيات
-            document.getElementById('today-orders').textContent = todayOrders;
-            document.getElementById('pending-orders').textContent = pendingOrders;
-            document.getElementById('total-customers').textContent = totalCustomers;
-            document.getElementById('total-sales').textContent = formatPrice(totalSales);
-            document.getElementById('total-orders').textContent = allOrders.length;
-            
-            // تحديث المحتوى بناءً على التبويب النشط
-            const activeTab = document.querySelector('.admin-tab-btn.active').dataset.tab;
-            if (activeTab === 'orders') renderOrdersList();
-            if (activeTab === 'customers') renderCustomersList();
-            if (activeTab === 'analytics') renderAnalytics();
-            if (activeTab === 'delivery') renderDeliveryData();
-        };
+    const createOrderCard = (order) => {
+        const orderEl = document.createElement('div');
+        orderEl.className = `order-card ${order.status === 'ملغي' ? 'order-card-cancelled' : ''}`;
 
-        // --- Orders Management ---
-        const renderOrdersList = () => {
-            const ordersList = document.getElementById('admin-orders-list');
-            const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
-            
-            let filteredOrders = allOrders;
-            if (activeFilter !== 'all') {
+        const orderItemsHTML = `<ul>${Object.values(order.items || {}).map(item =>
+            `<li><span>${item.name} (×${item.quantity})</span> <span>${formatPrice(item.price * item.quantity)} جنيه</span></li>`
+        ).join('')}</ul>`;
+
+        const statusClass = getStatusClass(order.status);
+        const statusIndex = getStatusIndex(order.status);
+        const progressSteps = ['قيد المراجعة', 'تم الدفع', 'قيد التجهيز', 'قيد التوصيل', 'تم التسليم'];
+
+        const progressHTML = order.status !== 'ملغي' ? `<div class="order-progress">
+            ${progressSteps.map((label, i) => `
+                <div class="progress-step ${statusIndex >= i ? 'completed' : ''} ${statusIndex === i ? 'active' : ''}">
+                    <div class="progress-step-icon">${i+1}</div>
+                    <div class="progress-step-label">${label}</div>
+                </div>
+            `).join('')}
+        </div>` : '';
+
+        let adminActionsHTML = '';
+        if (order.status !== 'ملغي' && order.status !== 'تم التسليم') {
+             adminActionsHTML = `<div class="order-card-actions">
+                 <button class="btn-success" data-action="confirm-payment">تأكيد الدفع</button>
+                 <button class="btn-warning" data-action="preparing">تجهيز</button>
+                 <button class="btn-info" data-action="delivering">توصيل</button>
+                 <button class="btn-success" data-action="delivered">تم التسليم</button>
+             </div>`;
+        }
+        if (order.status === 'ملغي') {
+             adminActionsHTML = `<div class="order-card-actions">
+                 <button class="btn-success" data-action="restore">استرجاع الطلب</button>
+             </div>`;
+        }
+
+        orderEl.innerHTML = `
+            <div class="order-card-header">
+                <div>
+                    <h4>طلب #${(order.id || '').substring(0, 8)}</h4>
+                    <p>${formatDate(order.timestamp)}</p>
+                    <p><strong>العميل:</strong> ${order.userInfo.name} | <strong>الهاتف:</strong> ${order.userInfo.phone || 'N/A'}</p>
+                    <p><strong>العنوان:</strong> ${order.userInfo.address || 'N/A'}</p>
+                </div>
+                <span class="status-badge ${statusClass}">${order.status}</span>
+            </div>
+            <p><strong>الإجمالي:</strong> ${formatPrice(order.total)} جنيه</p>
+            <button class="order-details-toggle">عرض التفاصيل</button>
+            <div class="order-items-details hidden">
+                <h4>المنتجات</h4>
+                ${orderItemsHTML}
+            </div>
+            ${progressHTML}
+            ${adminActionsHTML}
+        `;
+
+        // Event Listeners for the card
+        orderEl.querySelector('.order-details-toggle').addEventListener('click', (e) => {
+            const details = e.target.nextElementSibling;
+            details.classList.toggle('hidden');
+            e.target.textContent = details.classList.contains('hidden') ? 'عرض التفاصيل' : 'إخفاء التفاصيل';
+        });
+
+        orderEl.querySelectorAll('.order-card-actions button').forEach(button => {
+            button.addEventListener('click', () => {
+                const action = button.dataset.action;
                 const statusMap = {
-                    'pending': 'قيد المراجعة',
-                    'confirmed': 'تم تأكيد الدفع',
-                    'preparing': 'قيد التجهيز',
-                    'delivering': 'قيد التوصيل',
-                    'delivered': 'تم التسليم',
-                    'cancelled': 'ملغي'
+                    'confirm-payment': 'تم تأكيد الدفع', 'preparing': 'قيد التجهيز',
+                    'delivering': 'قيد التوصيل', 'delivered': 'تم التسليم',
+                    'restore': 'قيد المراجعة'
                 };
-                filteredOrders = allOrders.filter(order => order.status === statusMap[activeFilter]);
-            }
-            
-            ordersList.innerHTML = '';
-            
-            if (filteredOrders.length === 0) {
-                ordersList.innerHTML = `<p style="text-align: center;">لا توجد طلبات.</p>`;
-                return;
-            }
-            
-            filteredOrders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
-            filteredOrders.forEach(order => {
-                const orderEl = createOrderCard(order);
-                ordersList.appendChild(orderEl);
+                if (statusMap[action]) {
+                    updateOrderStatus(order.userId, order.id, statusMap[action]);
+                }
             });
+        });
+
+        return orderEl;
+    };
+
+    const getStatusClass = (status) => {
+        const map = {
+            'قيد المراجعة': 'status-pending', 'تم تأكيد الدفع': 'status-confirmed',
+            'قيد التجهيز': 'status-preparing', 'قيد التوصيل': 'status-delivering',
+            'تم التسليم': 'status-delivered', 'ملغي': 'status-cancelled'
         };
+        return map[status] || '';
+    };
 
-        const createOrderCard = (order) => {
-            const orderEl = document.createElement('div');
-            orderEl.className = `order-card ${order.status === 'ملغي' ? 'order-card-cancelled' : ''}`;
+    const getStatusIndex = (status) => {
+        const map = {
+            'قيد المراجعة': 0, 'تم تأكيد الدفع': 1, 'قيد التجهيز': 2,
+            'قيد التوصيل': 3, 'تم التسليم': 4, 'ملغي': -1
+        };
+        return map[status] ?? 0;
+    };
 
-            const orderItemsHTML = `<ul>${Object.values(order.items || {}).map(item =>
-                `<li><span>${item.name} (×${item.quantity})</span> <span>${formatPrice(item.price * item.quantity)} جنيه</span></li>`
-            ).join('')}</ul>`;
+    const updateOrderStatus = async (userId, orderId, newStatus) => {
+        const orderRef = ref(database, `users/${userId}/orders/${orderId}`);
+        try {
+            await update(orderRef, { status: newStatus });
+            showToast(`تم تحديث حالة الطلب إلى: ${newStatus}`);
+        } catch (error) {
+            showToast(`خطأ: ${error.message}`, false);
+        }
+    };
 
-            const statusClass = getStatusClass(order.status);
-            const statusIndex = getStatusIndex(order.status);
-            const progressSteps = ['قيد المراجعة', 'تم الدفع', 'قيد التجهيز', 'قيد التوصيل', 'تم التسليم'];
-
-            const progressHTML = order.status !== 'ملغي' ? `<div class="order-progress">
-                ${progressSteps.map((label, i) => `
-                    <div class="progress-step ${statusIndex >= i ? 'completed' : ''} ${statusIndex === i ? 'active' : ''}">
-                        <div class="progress-step-icon">${i+1}</div>
-                        <div class="progress-step-label">${label}</div>
-                    </div>
-                `).join('')}
-            </div>` : '';
-
-            let adminActionsHTML = '';
-            if (order.status !== 'ملغي' && order.status !== 'تم التسليم') {
-                 adminActionsHTML = `<div class="order-card-actions">
-                    <button class="btn-success" data-action="confirm-payment">تأكيد الدفع</button>
-                    <button class="btn-warning" data-action="preparing">تجهيز</button>
-                    <button class="btn-info" data-action="delivering">توصيل</button>
-                    <button class="btn-success" data-action="delivered">تم التسليم</button>
-                </div>`;
-            }
-            if (order.status === 'ملغي') {
-                 adminActionsHTML = `<div class="order-card-actions">
-                    <button class="btn-success" data-action="restore">استرجاع الطلب</button>
-                </div>`;
-            }
-
-            orderEl.innerHTML = `
-                <div class="order-card-header">
-                    <div>
-                        <h4>طلب #${(order.id || '').substring(0, 8)}</h4>
-                        <p>${formatDate(order.timestamp)}</p>
-                        <p><strong>العميل:</strong> ${order.userInfo.name} | <strong>الهاتف:</strong> ${order.userInfo.phone || 'N/A'}</p>
-                        <p><strong>العنوان:</strong> ${order.userInfo.address || 'N/A'}</p>
-                    </div>
-                    <span class="status-badge ${statusClass}">${order.status}</span>
-                </div>
-                <p><strong>الإجمالي:</strong> ${formatPrice(order.total)} جنيه</p>
-                <button class="order-details-toggle">عرض التفاصيل</button>
-                <div class="order-items-details hidden">
-                    <h4>المنتجات</h4>
-                    ${orderItemsHTML}
-                </div>
-                ${progressHTML}
-                ${adminActionsHTML}
+    // --- Customers Management ---
+    const renderCustomersList = () => {
+        const customersList = document.getElementById('customers-list');
+        customersList.innerHTML = '';
+        
+        if (allCustomers.length === 0) {
+            customersList.innerHTML = `<p style="text-align: center;">لا يوجد عملاء مسجلين.</p>`;
+            return;
+        }
+        
+        allCustomers.forEach(customer => {
+            const customerEl = document.createElement('div');
+            customerEl.className = 'customer-card';
+            customerEl.innerHTML = `
+                <h4>${customer.name}</h4>
+                <p><strong>البريد الإلكتروني:</strong> ${customer.email}</p>
+                <p><strong>رقم الهاتف:</strong> ${customer.phone || 'لا يوجد'}</p>
+                <p><strong>العنوان:</strong> ${customer.address || 'لا يوجد'}</p>
+                <p><strong>عدد الطلبات:</strong> ${customer.ordersCount}</p>
             `;
+            customersList.appendChild(customerEl);
+        });
+    };
 
-            // Event Listeners for the card
-            orderEl.querySelector('.order-details-toggle').addEventListener('click', (e) => {
-                const details = e.target.nextElementSibling;
-                details.classList.toggle('hidden');
-                e.target.textContent = details.classList.contains('hidden') ? 'عرض التفاصيل' : 'إخفاء التفاصيل';
-            });
-
-            orderEl.querySelectorAll('.order-card-actions button').forEach(button => {
-                button.addEventListener('click', () => {
-                    const action = button.dataset.action;
-                    const statusMap = {
-                        'confirm-payment': 'تم تأكيد الدفع', 'preparing': 'قيد التجهيز',
-                        'delivering': 'قيد التوصيل', 'delivered': 'تم التسليم',
-                        'restore': 'قيد المراجعة'
-                    };
-                    if (statusMap[action]) {
-                        updateOrderStatus(order.userId, order.id, statusMap[action]);
-                    }
+    // --- Analytics ---
+    const renderAnalytics = () => {
+        let productCounts = {};
+        allOrders.forEach(order => {
+            if (order.items) {
+                Object.values(order.items).forEach(item => {
+                    const productName = item.name;
+                    productCounts[productName] = (productCounts[productName] || 0) + (item.quantity || 1);
                 });
-            });
-
-            return orderEl;
-        };
-
-        const getStatusClass = (status) => {
-            const map = {
-                'قيد المراجعة': 'status-pending', 'تم تأكيد الدفع': 'status-confirmed',
-                'قيد التجهيز': 'status-preparing', 'قيد التوصيل': 'status-delivering',
-                'تم التسليم': 'status-delivered', 'ملغي': 'status-cancelled'
-            };
-            return map[status] || '';
-        };
-
-        const getStatusIndex = (status) => {
-            const map = {
-                'قيد المراجعة': 0, 'تم تأكيد الدفع': 1, 'قيد التجهيز': 2,
-                'قيد التوصيل': 3, 'تم التسليم': 4, 'ملغي': -1
-            };
-            return map[status] ?? 0;
-        };
-
-        const updateOrderStatus = async (userId, orderId, newStatus) => {
-            const orderRef = ref(database, `users/${userId}/orders/${orderId}`);
-            try {
-                await update(orderRef, { status: newStatus });
-                showToast(`تم تحديث حالة الطلب إلى: ${newStatus}`);
-            } catch (error) {
-                showToast(`خطأ: ${error.message}`, false);
             }
-        };
-
-        // --- Customers Management ---
-        const renderCustomersList = () => {
-            const customersList = document.getElementById('customers-list');
-            customersList.innerHTML = '';
-            
-            if (allCustomers.length === 0) {
-                customersList.innerHTML = `<p style="text-align: center;">لا يوجد عملاء مسجلين.</p>`;
-                return;
+        });
+        
+        let mostOrderedProduct = '-';
+        let maxCount = 0;
+        
+        for (const [product, count] of Object.entries(productCounts)) {
+            if (count > maxCount) {
+                maxCount = count;
+                mostOrderedProduct = `${product} (${count})`;
             }
-            
-            allCustomers.forEach(customer => {
-                const customerEl = document.createElement('div');
-                customerEl.className = 'customer-card';
-                customerEl.innerHTML = `
-                    <h4>${customer.name}</h4>
-                    <p><strong>البريد الإلكتروني:</strong> ${customer.email}</p>
-                    <p><strong>رقم الهاتف:</strong> ${customer.phone || 'لا يوجد'}</p>
-                    <p><strong>العنوان:</strong> ${customer.address || 'لا يوجد'}</p>
-                    <p><strong>عدد الطلبات:</strong> ${customer.ordersCount}</p>
-                `;
-                customersList.appendChild(customerEl);
-            });
-        };
+        }
+        
+        document.getElementById('most-ordered-product').textContent = mostOrderedProduct;
+    };
 
-        // --- Analytics ---
-        const renderAnalytics = () => {
-            // حساب المنتج الأكثر طلباً
-            let productCounts = {};
-            allOrders.forEach(order => {
-                if (order.items) {
-                    Object.values(order.items).forEach(item => {
-                        const productName = item.name;
-                        productCounts[productName] = (productCounts[productName] || 0) + (item.quantity || 1);
-                    });
-                }
-            });
-            
-            let mostOrderedProduct = '-';
-            let maxCount = 0;
-            
-            for (const [product, count] of Object.entries(productCounts)) {
-                if (count > maxCount) {
-                    maxCount = count;
-                    mostOrderedProduct = `${product} (${count})`;
-                }
+    // --- Delivery Management ---
+    const renderDeliveryData = () => {
+        const addresses = {};
+        
+        allCustomers.forEach(customer => {
+            if (customer.address) {
+                const address = customer.address;
+                if (!addresses[address]) addresses[address] = [];
+                addresses[address].push(customer.name);
             }
-            
-            document.getElementById('most-ordered-product').textContent = mostOrderedProduct;
-        };
+        });
+        
+        const addressContainer = document.getElementById('customers-by-address');
+        addressContainer.innerHTML = '';
+        
+        Object.entries(addresses).forEach(([address, customers]) => {
+            const addressEl = document.createElement('div');
+            addressEl.className = 'address-group';
+            addressEl.innerHTML = `
+                <h4>${address}</h4>
+                <ul>
+                    ${customers.map(customer => `<li>${customer}</li>`).join('')}
+                </ul>
+            `;
+            addressContainer.appendChild(addressEl);
+        });
+    };
 
-        // --- Delivery Management ---
-        const renderDeliveryData = () => {
-            const addresses = {};
-            
-            allCustomers.forEach(customer => {
-                if (customer.address) {
-                    const address = customer.address;
-                    if (!addresses[address]) addresses[address] = [];
-                    addresses[address].push(customer.name);
-                }
+    // --- Tab Management ---
+    const setupAdminTabs = () => {
+        elements.tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.dataset.tab;
+                
+                elements.tabButtons.forEach(btn => btn.classList.remove('active'));
+                elements.tabContents.forEach(content => content.classList.remove('active'));
+                
+                button.classList.add('active');
+                document.getElementById(`admin-${tabId}`).classList.add('active');
+                
+                if (tabId === 'orders') renderOrdersList();
+                if (tabId === 'customers') renderCustomersList();
+                if (tabId === 'analytics') renderAnalytics();
+                if (tabId === 'delivery') renderDeliveryData();
             });
-            
-            const addressContainer = document.getElementById('customers-by-address');
-            addressContainer.innerHTML = '';
-            
-            Object.entries(addresses).forEach(([address, customers]) => {
-                const addressEl = document.createElement('div');
-                addressEl.className = 'address-group';
-                addressEl.innerHTML = `
-                    <h4>${address}</h4>
-                    <ul>
-                        ${customers.map(customer => `<li>${customer}</li>`).join('')}
-                    </ul>
-                `;
-                addressContainer.appendChild(addressEl);
+        });
+    };
+
+    // --- Filter Management ---
+    const setupFilters = () => {
+        elements.filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                elements.filterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                renderOrdersList();
             });
-        };
+        });
+    };
 
-        // --- Tab Management ---
-        const setupAdminTabs = () => {
-            elements.tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const tabId = button.dataset.tab;
-                    
-                    // إزالة النشاط من جميع الأزرار والمحتويات
-                    elements.tabButtons.forEach(btn => btn.classList.remove('active'));
-                    elements.tabContents.forEach(content => content.classList.remove('active'));
-                    
-                    // إضافة النشاط للعناصر المحددة
-                    button.classList.add('active');
-                    document.getElementById(`admin-${tabId}`).classList.add('active');
-                    
-                    // تحميل محتوى التبويب
-                    if (tabId === 'orders') renderOrdersList();
-                    if (tabId === 'customers') renderCustomersList();
-                    if (tabId === 'analytics') renderAnalytics();
-                    if (tabId === 'delivery') renderDeliveryData();
-                });
-            });
-        };
+    // --- Event Listeners Setup ---
+    elements.logoutBtn.addEventListener('click', () => signOut(auth).then(() => {
+        showToast("تم تسجيل الخروج.");
+        window.location.href = "index.html";
+    }));
 
-        // --- Filter Management ---
-        const setupFilters = () => {
-            elements.filterButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    elements.filterButtons.forEach(btn => btn.classList.remove('active'));
-                    button.classList.add('active');
-                    renderOrdersList();
-                });
-            });
-        };
-
-        // --- Event Listeners Setup ---
-        elements.logoutBtn.addEventListener('click', () => signOut(auth).then(() => {
-            showToast("تم تسجيل الخروج.");
-            window.location.href = "index.html";
-        }));
-
-        // Initialize
-        setupAdminTabs();
-        setupFilters();
-
-    </script>
+    // Initialize
+    setupAdminTabs();
+    setupFilters();
+</script>
 </body>
 </html>
